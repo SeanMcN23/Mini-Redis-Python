@@ -18,10 +18,10 @@ client= socket.socket()
 
 client.connect(("127.0.0.1", 31337))
 
-client.sendall(encode_command("SET", "name", "Sean"))
+client.sendall(encode_command("BaNNANa", "name", "Sean"))
 print(client.recv(1024))
 
-client.sendall(encode_command("GET", "name"))
+client.sendall(encode_command("PING"))
 print(client.recv(1024))
 
 client.close()

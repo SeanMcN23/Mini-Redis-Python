@@ -102,18 +102,27 @@ class Server:
         self._server.serve_forever()
     
 
+    def check_expire(self,key):
+         if key in self.expire:
+            if time.time() >= self.expire[key]:
+                del self.expire[key]
+                del self._kv[key]
 
 
     def get_response(self,data):
         command= data[0]
         # this is how we can return specified data that we have stored within redis based on what command has been entered
+       
         
         if command.upper()== "SET":
+
             if len(data) != 3:
                 raise CommandError("SET requires 2 argument (key:value)")
             self._kv[data[1]]=data[2]
             return "OK"
+        
         elif command.upper() == "GET":
+            self.check_expire(data[1])
             if len(data) != 2:
                 raise CommandError("GET requires 1 argument")
             
@@ -123,7 +132,26 @@ class Server:
             if len(data) != 3:
                 raise CommandError("EXPIRE requires 2 argument")
             self.expire[data[1]]=time.time()+float(data[2])
+
+        elif command.upper() == 'TTL':
+            if len(data) != 2:
+                raise CommandError("TTL requires 1 argument")
+            
+            self.check_expire(data[1])
+            
+            if data[1] not in self._kv:
+                return -2
+            elif data[1] not in self.expire:
+                return -1
+            
+            return int(self.expire[data[1]]-time.time())
+            
+
+
+
+        
         elif command.upper() == "DEL":
+            self.check_expire(data[1])
             if len(data) != 2:
                 raise CommandError("DEL requires 1 argument")
             if data[1] in self._kv:
@@ -131,7 +159,10 @@ class Server:
                 return 1
             else:
                 return 0
+        
         elif command.upper()=="EXISTS":
+            self.check_expire(data[1])
+            
             if len(data) != 2:
                 raise CommandError("EXISTS requires 1 argument")
             
@@ -140,6 +171,7 @@ class Server:
                 return 1
             else:
                 return 0
+        
         elif command.upper() == "PING":
             if len(data) != 1:
                 raise CommandError("PING requires 0 argument")

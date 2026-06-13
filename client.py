@@ -1,5 +1,6 @@
 import gevent 
 import socket
+import time
 
 
 def encode_command(*parts):
@@ -18,10 +19,16 @@ client= socket.socket()
 
 client.connect(("127.0.0.1", 31337))
 
-client.sendall(encode_command("BaNNANa", "name", "Sean"))
+client.sendall(encode_command("SET", "name", "Sean"))
 print(client.recv(1024))
 
-client.sendall(encode_command("PING"))
+
+client.sendall(encode_command("EXPIRE", "name", "10"))
+print(client.recv(1024))
+
+time.sleep(15)
+
+client.sendall(encode_command("EXISTS",'name'))
 print(client.recv(1024))
 
 client.close()

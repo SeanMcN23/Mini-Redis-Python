@@ -22,9 +22,15 @@ client.connect(("127.0.0.1", 31337))
 client.sendall(encode_command("SET", "name", "Sean"))
 print(client.recv(1024))
 
+client.sendall(encode_command("TTL", "name"))
+print(client.recv(1024)) 
+
 
 client.sendall(encode_command("EXPIRE", "name", "10"))
 print(client.recv(1024))
+
+client.sendall(encode_command("TTL", "name"))
+print(client.recv(1024)) 
 
 time.sleep(15)
 

@@ -118,7 +118,10 @@ class Server:
 
             if len(data) != 3:
                 raise CommandError("SET requires 2 argument (key:value)")
+            
             self._kv[data[1]]=data[2]
+
+            self.expire.pop(data[1], None)
             return "OK"
         
         elif command.upper() == "GET":
@@ -129,9 +132,15 @@ class Server:
 
             return self._kv.get(data[1])
         elif command.upper() == "EXPIRE":
+
             if len(data) != 3:
                 raise CommandError("EXPIRE requires 2 argument")
+            
+            if data[1] not in self._kv:
+                return 0
             self.expire[data[1]]=time.time()+float(data[2])
+             
+            return 1
 
         elif command.upper() == 'TTL':
             if len(data) != 2:
@@ -152,6 +161,7 @@ class Server:
         
         elif command.upper() == "DEL":
             self.check_expire(data[1])
+            self.expire.pop(data[1], None)
             if len(data) != 2:
                 raise CommandError("DEL requires 1 argument")
             if data[1] in self._kv:

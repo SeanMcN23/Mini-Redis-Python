@@ -3,6 +3,7 @@ from gevent.pool import Pool
 from gevent.server import StreamServer
 from collections import namedtuple
 import time
+import json
 
 Error=namedtuple('Error',('message',)) # this is like a class basically, a small class
 
@@ -70,6 +71,7 @@ class Server:
         self.expire={}
         self.host=host
         self.port=port
+        
 
         self._protocol=ProtocolHandler()
 
@@ -131,6 +133,65 @@ class Server:
             
 
             return self._kv.get(data[1])
+        
+
+        elif command.upper() == "SAVE":
+            with open("dump.json",'w') as f:
+                json.dump({
+                    "kv":self._kv,
+                    "expire":self.expire
+                },f)
+                return "OK"
+        
+        elif command.upper()=="LOAD":
+            with open("dump.json",'r') as f:
+                data = json.load(f)
+
+            self._kv=data['kv']
+            self.expire=data['expire']
+            return "OK"
+        
+        elif command.upper()== "INCR":
+            if len(data) != 2:
+                 raise CommandError("INCR requires 1 argument")
+            key=data[1]
+            self.check_expire(key)
+
+            value=self._kv.get(key,"0")
+
+            try:
+                value=int(value)
+            except ValueError:
+                raise CommandError("value is not an integer")
+            
+
+            value += 1
+            self._kv[key]= str(value)
+            return value
+        
+
+        elif command.upper() == "DECR":
+            if len(data) != 2:
+                 raise CommandError("DECR requires 1 argument")
+            key=data[1]
+            self.check_expire(key)
+
+            value=self._kv.get(key,"0")
+
+            try:
+                value=int(value)
+            except ValueError:
+                raise CommandError("value is not an integer")
+            
+
+            value -= 1
+            self._kv[key]= str(value)
+            return value
+             
+
+            
+
+
         elif command.upper() == "EXPIRE":
 
             if len(data) != 3:

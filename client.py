@@ -19,22 +19,46 @@ client= socket.socket()
 
 client.connect(("127.0.0.1", 31337))
 
-client.sendall(encode_command("SET", "name", "Sean"))
+#client.sendall(encode_command("SET", "name", "Sean"))
+#print(client.recv(1024))
+
+#client.sendall(encode_command("TTL", "name"))
+#print(client.recv(1024)) 
+
+
+#client.sendall(encode_command("EXPIRE", "name", "10"))
+#print(client.recv(1024))
+
+#client.sendall(encode_command("TTL", "name"))
+#print(client.recv(1024)) 
+
+#time.sleep(15)
+
+#client.sendall(encode_command("EXISTS",'name'))
+#print(client.recv(1024))
+
+#client.sendall(encode_command("INCR",'counter'))
+#print(client.recv(1024))
+
+#client.sendall(encode_command("DECR",'counter1'))
+#print(client.recv(1024))
+
+#client.sendall(encode_command("SET", "name", "Sean"))
+#print(client.recv(1024))
+
+#client.sendall(encode_command('SAVE'))
+#print(client.recv(1024))
+
+
+client.sendall(encode_command("LOAD"))
 print(client.recv(1024))
 
-client.sendall(encode_command("TTL", "name"))
-print(client.recv(1024)) 
-
-
-client.sendall(encode_command("EXPIRE", "name", "10"))
+client.sendall(encode_command("GET","name"))
 print(client.recv(1024))
 
-client.sendall(encode_command("TTL", "name"))
-print(client.recv(1024)) 
 
-time.sleep(15)
+#time.sleep(10)
 
-client.sendall(encode_command("EXISTS",'name'))
-print(client.recv(1024))
+
 
 client.close()

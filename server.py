@@ -80,6 +80,21 @@ class Server:
         self.expire={}
         self.host=host
         self.port=port
+        self.commands={
+            "SET": self.cmd_set,
+            "GET": self.cmd_get,
+            "DEL": self.cmd_del,
+            "EXISTS": self.cmd_exists,
+            "PING": self.cmd_ping,
+            "EXPIRE": self.cmd_expire,
+            "TTL": self.cmd_ttl,
+            "INCR": self.cmd_incr,
+            "DECR": self.cmd_decr,
+            "KEYS": self.cmd_keys,
+            "FLUSHDB": self.cmd_flushdb,
+            "SAVE": self.cmd_save,
+            "LOAD": self.cmd_load,
+        }
         
 
         self._protocol=ProtocolHandler()
@@ -120,159 +135,159 @@ class Server:
                 del self._kv[key]
 
 
-    def get_response(self,data):
-        command= data[0]
-        # this is how we can return specified data that we have stored within redis based on what command has been entered
-       
-        
-        if command.upper()== "SET":
 
-            if len(data) != 3:
+    def cmd_set(self,data):
+        if len(data) != 3:
                 raise CommandError("SET requires 2 argument (key:value)")
             
-            self._kv[data[1]]=data[2]
+        self._kv[data[1]]=data[2]
 
-            self.expire.pop(data[1], None)
-            return "OK"
-        
-        elif command.upper() == "GET":
-            self.check_expire(data[1])
-            if len(data) != 2:
-                raise CommandError("GET requires 1 argument")
+        self.expire.pop(data[1], None)
+        return "OK"
+    
+
+    def cmd_get(self,data):
+        self.check_expire(data[1])
+        if len(data) != 2:
+            raise CommandError("GET requires 1 argument")
             
 
-            return self._kv.get(data[1])
-        
-        elif command.upper()== "KEYS":
-            if len(data) != 1:
-                raise CommandError("KEYS requires 0 arguments")
+        return self._kv.get(data[1])
+
+    def cmd_keys(self,data):
+        if len(data) != 1:
+            raise CommandError("KEYS requires 0 arguments")
             
-            for key in list(self._kv.keys()):
-                self.check_expire(key)
-            return list(self._kv.keys())
-        
-
-        elif command.upper() == "SAVE":
-            with open("dump.json",'w') as f:
-                json.dump({
-                    "kv":self._kv,
-                    "expire":self.expire
-                },f)
-                return "OK"
-        elif command.upper()=="FLUSHDB":
-            if len(data) != 1:
-                raise CommandError("FLUSHDB requires 0 arugments")
-            self._kv.clear()
-            self.expire.clear()
-            return "OK"
-        
-        elif command.upper()=="LOAD":
-            with open("dump.json",'r') as f:
-                data = json.load(f)
-
-            self._kv=data['kv']
-            self.expire=data['expire']
-            return "OK"
-        
-        elif command.upper()== "INCR":
-            if len(data) != 2:
-                 raise CommandError("INCR requires 1 argument")
-            key=data[1]
+        for key in list(self._kv.keys()):
             self.check_expire(key)
+        return list(self._kv.keys())
 
-            value=self._kv.get(key,"0")
+    def cmd_save(self,data):
+        with open("dump.json",'w') as f:
+            json.dump({
+            "kv":self._kv,
+            "expire":self.expire
+            },f)
+            return "OK"
+    def cmd_flushdb(self,data):
+        if len(data) != 1:
+            raise CommandError("FLUSHDB requires 0 arugments")
+        self._kv.clear()
+        self.expire.clear()
+        return "OK"
+    def cmd_load(self,data):
+        with open("dump.json",'r') as f:
+            data = json.load(f)
 
-            try:
-                value=int(value)
-            except ValueError:
-                raise CommandError("value is not an integer")
+        self._kv=data['kv']
+        self.expire=data['expire']
+        return "OK"
+    def cmd_incr(self,data):
+        if len(data) != 2:
+            raise CommandError("INCR requires 1 argument")
+        key=data[1]
+        self.check_expire(key)
+
+        value=self._kv.get(key,"0")
+
+        try:
+            value=int(value)
+        except ValueError:
+            raise CommandError("value is not an integer")
             
 
-            value += 1
-            self._kv[key]= str(value)
-            return value
-        
+        value += 1
+        self._kv[key]= str(value)
+        return value
+    
+    def cmd_decr(self,data):
+        if len(data) != 2:
+            raise CommandError("DECR requires 1 argument")
+        key=data[1]
+        self.check_expire(key)
 
-        elif command.upper() == "DECR":
-            if len(data) != 2:
-                 raise CommandError("DECR requires 1 argument")
-            key=data[1]
-            self.check_expire(key)
+        value=self._kv.get(key,"0")
 
-            value=self._kv.get(key,"0")
-
-            try:
-                value=int(value)
-            except ValueError:
-                raise CommandError("value is not an integer")
+        try:
+            value=int(value)
+        except ValueError:
+            raise CommandError("value is not an integer")
             
 
-            value -= 1
-            self._kv[key]= str(value)
-            return value
+        value -= 1
+        self._kv[key]= str(value)
+        return value    
+    
+    def cmd_expire(self,data):
+        if len(data) != 3:
+            raise CommandError("EXPIRE requires 2 argument")
+            
+        if data[1] not in self._kv:
+            return 0
+        self.expire[data[1]]=time.time()+float(data[2])
              
-
+        return 1
+    
+    def cmd_ttl(self,data):
+        if len(data) != 2:
+            raise CommandError("TTL requires 1 argument")
             
-
-
-        elif command.upper() == "EXPIRE":
-
-            if len(data) != 3:
-                raise CommandError("EXPIRE requires 2 argument")
+        self.check_expire(data[1])
             
-            if data[1] not in self._kv:
-                return 0
-            self.expire[data[1]]=time.time()+float(data[2])
-             
+        if data[1] not in self._kv:
+            return -2
+        elif data[1] not in self.expire:
+            return -1
+            
+        return int(self.expire[data[1]]-time.time())
+    def cmd_del(self,data):
+        self.check_expire(data[1])
+        self.expire.pop(data[1], None)
+        if len(data) != 2:
+            raise CommandError("DEL requires 1 argument")
+        if data[1] in self._kv:
+            del self._kv[data[1]]
             return 1
-
-        elif command.upper() == 'TTL':
-            if len(data) != 2:
-                raise CommandError("TTL requires 1 argument")
-            
-            self.check_expire(data[1])
-            
-            if data[1] not in self._kv:
-                return -2
-            elif data[1] not in self.expire:
-                return -1
-            
-            return int(self.expire[data[1]]-time.time())
-            
-
-
-
-        
-        elif command.upper() == "DEL":
-            self.check_expire(data[1])
-            self.expire.pop(data[1], None)
-            if len(data) != 2:
-                raise CommandError("DEL requires 1 argument")
-            if data[1] in self._kv:
-                del self._kv[data[1]]
-                return 1
-            else:
-                return 0
-        
-        elif command.upper()=="EXISTS":
-            self.check_expire(data[1])
-            
-            if len(data) != 2:
-                raise CommandError("EXISTS requires 1 argument")
-            
-            val=data[1] in self._kv
-            if val == True:
-                return 1
-            else:
-                return 0
-        
-        elif command.upper() == "PING":
-            if len(data) != 1:
-                raise CommandError("PING requires 0 argument")
-            return "PONG"
-
         else:
-            raise CommandError("Unknown Command encountered")
+            return 0
+    def cmd_exists(self,data):
+        self.check_expire(data[1])
+            
+        if len(data) != 2:
+            raise CommandError("EXISTS requires 1 argument")
+            
+        val=data[1] in self._kv
+        if val == True:
+            return 1
+        else:
+            return 0
+    def cmd_ping(self,data):
+        if len(data) != 1:
+            raise CommandError("PING requires 0 argument")
+        return "PONG"
+
+
+    def get_response(self,data):
+        
+        # this is how we can return specified data that we have stored within redis based on what command has been entered
+        if not data:
+            raise CommandError("Empty Command")
+        
+        command= data[0].upper()
+
+        handler=self.commands.get(command)
+
+        if handler is None:
+            raise CommandError("Not a command")
+        
+        return handler(data)
+   
+        
+       
+      
+        
+       
+
         
 
         

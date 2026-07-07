@@ -67,7 +67,7 @@ class ProtocolHandler:
                 item=str(item).encode("utf-8")
                 socket_file.write(b"$" + str(len(item)).encode() + b"\r\n")
                 socket_file.write(item+ b"\r\n")
-                
+
         else:
             data=str(data).encode('utf-8')
             socket_file.write(b"$" + str(len(data)).encode('utf-8')+b"\r\n")
@@ -159,6 +159,12 @@ class Server:
                     "expire":self.expire
                 },f)
                 return "OK"
+        elif command.upper()=="FLUSHDB":
+            if len(data) != 1:
+                raise CommandError("FLUSHDB requires 0 arugments")
+            self._kv.clear()
+            self.expire.clear()
+            return "OK"
         
         elif command.upper()=="LOAD":
             with open("dump.json",'r') as f:

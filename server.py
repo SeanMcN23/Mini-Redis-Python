@@ -59,6 +59,15 @@ class ProtocolHandler:
             socket_file.write(b"$-1\r\n")
         elif isinstance(data,int):
             socket_file.write(f":{data}\r\n".encode("utf-8"))
+
+        elif isinstance(data,list):
+            socket_file.write(f"*{len(data)}\r\n".encode())
+
+            for item in data:
+                item=str(item).encode("utf-8")
+                socket_file.write(b"$" + str(len(item)).encode() + b"\r\n")
+                socket_file.write(item+ b"\r\n")
+                
         else:
             data=str(data).encode('utf-8')
             socket_file.write(b"$" + str(len(data)).encode('utf-8')+b"\r\n")
@@ -133,6 +142,14 @@ class Server:
             
 
             return self._kv.get(data[1])
+        
+        elif command.upper()== "KEYS":
+            if len(data) != 1:
+                raise CommandError("KEYS requires 0 arguments")
+            
+            for key in list(self._kv.keys()):
+                self.check_expire(key)
+            return list(self._kv.keys())
         
 
         elif command.upper() == "SAVE":

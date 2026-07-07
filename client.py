@@ -19,8 +19,27 @@ client= socket.socket()
 
 client.connect(("127.0.0.1", 31337))
 
-#client.sendall(encode_command("SET", "name", "Sean"))
-#print(client.recv(1024))
+client.sendall(encode_command("SET", "name", "Sean"))
+print(client.recv(1024))
+
+client.sendall(encode_command("SET", "time", "thursday"))
+print(client.recv(1024))
+
+client.sendall(encode_command("SET", "money", "100mill"))
+print(client.recv(1024))
+
+client.sendall(encode_command("SET", "temp", "123"))
+print(client.recv(1024))
+
+client.sendall(encode_command("EXPIRE", "temp", "1"))
+print(client.recv(1024))
+
+time.sleep(2)
+
+client.sendall(encode_command("KEYS"))
+print(client.recv(1024))
+
+
 
 #client.sendall(encode_command("TTL", "name"))
 #print(client.recv(1024)) 
@@ -37,8 +56,8 @@ client.connect(("127.0.0.1", 31337))
 #client.sendall(encode_command("EXISTS",'name'))
 #print(client.recv(1024))
 
-#client.sendall(encode_command("INCR",'counter'))
-#print(client.recv(1024))
+client.sendall(encode_command("INCR",'counter'))
+print(client.recv(1024))
 
 #client.sendall(encode_command("DECR",'counter1'))
 #print(client.recv(1024))
@@ -50,11 +69,11 @@ client.connect(("127.0.0.1", 31337))
 #print(client.recv(1024))
 
 
-client.sendall(encode_command("LOAD"))
-print(client.recv(1024))
+#client.sendall(encode_command("LOAD"))
+#print(client.recv(1024))
 
-client.sendall(encode_command("GET","name"))
-print(client.recv(1024))
+#client.sendall(encode_command("GET","name"))
+#print(client.recv(1024))
 
 
 #time.sleep(10)

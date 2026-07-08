@@ -141,12 +141,19 @@ class Server:
 
 
     def cmd_set(self,data):
-        if len(data) != 3:
+        if len(data) != 3 and len(data) != 5:
                 raise CommandError("SET requires 2 argument (key:value)")
             
         self._kv[data[1]]=data[2]
 
         self.expire.pop(data[1], None)
+        
+        if len(data) == 5 and data[3].upper() == "EX":
+            self.expire[data[1]]=time.time()+float(data[4])
+        elif data[3] != "EX":
+            raise CommandError("SET requires 2 arguments or EX followed by time")
+            
+
         return "OK"
     
 

@@ -19,13 +19,15 @@ client= socket.socket()
 
 client.connect(("127.0.0.1", 31337))
 
-client.sendall(encode_command("SET", "name", "Sean"))
+client.sendall(encode_command("SET", "name", "Sean","EX",3))
+time.sleep(3)
 print(client.recv(1024))
 
-client.sendall(encode_command("RENAME", "name", "my_first_name"))
-print(client.recv(1024))
 
-client.sendall(encode_command("GET", "my_first_name"))
+# client.sendall(encode_command("RENAME", "name", "my_first_name"))
+# print(client.recv(1024))
+
+client.sendall(encode_command("GET", "name"))
 print(client.recv(1024))
 
 
@@ -83,8 +85,8 @@ print(client.recv(1024))
 #client.sendall(encode_command("EXISTS",'name'))
 #print(client.recv(1024))
 
-client.sendall(encode_command("INCR",'counter'))
-print(client.recv(1024))
+# client.sendall(encode_command("INCR",'counter'))
+# print(client.recv(1024))
 
 #client.sendall(encode_command("DECR",'counter1'))
 #print(client.recv(1024))

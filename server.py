@@ -95,7 +95,9 @@ class Server:
             "SAVE": self.cmd_save,
             "LOAD": self.cmd_load,
             "MGET": self.cmd_mget,
-            "MSET": self.cmd_mset
+            "MSET": self.cmd_mset,
+            "RENAME":self.cmd_rename,
+
         }
         
 
@@ -285,6 +287,33 @@ class Server:
             self._kv[keye]=value
         return "OK"
         
+    def cmd_rename(self,data):
+        if len(data) != 3:
+            raise CommandError("Expected 3 arguments for RENAME")
+        
+        old=data[1]
+        new=data[2]
+        if old == new:
+            return "OK"
+
+        val=self._kv.get(old)
+        if old in self._kv:
+            del self._kv[old]
+
+        
+        if old in self.expire:
+            time=self.expire.get(old)
+            del self.expire[old]
+            self.expire[new]=time
+        self._kv[new]=val
+
+        return "OK"
+
+        
+
+
+        
+
 
         
 

@@ -19,8 +19,16 @@ client= socket.socket()
 
 client.connect(("127.0.0.1", 31337))
 
-# client.sendall(encode_command("SET", "name", "Sean"))
-# print(client.recv(1024))
+client.sendall(encode_command("SET", "name", "Sean"))
+print(client.recv(1024))
+
+client.sendall(encode_command("RENAME", "name", "my_first_name"))
+print(client.recv(1024))
+
+client.sendall(encode_command("GET", "my_first_name"))
+print(client.recv(1024))
+
+
 
 # client.sendall(encode_command("SET", "time", "thursday"))
 # print(client.recv(1024))
@@ -51,11 +59,11 @@ client.connect(("127.0.0.1", 31337))
 # client.sendall(encode_command("KEYS"))
 # print(client.recv(1024))
 
-client.sendall(encode_command("MSET", "name", "Sean",'age',"25","job", "none"))
-print(client.recv(1024))
+# client.sendall(encode_command("MSET", "name", "Sean",'age',"25","job", "none"))
+# print(client.recv(1024))
 
-client.sendall(encode_command("MGET", "name", "age","job"))
-print(client.recv(1024))
+# client.sendall(encode_command("MGET", "name", "age","job"))
+# print(client.recv(1024))
 
 
 

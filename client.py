@@ -39,16 +39,22 @@ client.connect(("127.0.0.1", 31337))
 # client.sendall(encode_command("KEYS"))
 # print(client.recv(1024))
 
-client.sendall(encode_command("SET", "name", "Sean"))
+# client.sendall(encode_command("SET", "name", "Sean"))
+# print(client.recv(1024))
+
+# client.sendall(encode_command("KEYS"))
+# print(client.recv(1024))
+
+# client.sendall(encode_command("FLUSHDB"))
+# print(client.recv(1024))
+
+# client.sendall(encode_command("KEYS"))
+# print(client.recv(1024))
+
+client.sendall(encode_command("MSET", "name", "Sean",'age',"25","job", "none"))
 print(client.recv(1024))
 
-client.sendall(encode_command("KEYS"))
-print(client.recv(1024))
-
-client.sendall(encode_command("FLUSHDB"))
-print(client.recv(1024))
-
-client.sendall(encode_command("KEYS"))
+client.sendall(encode_command("MGET", "name", "age","job"))
 print(client.recv(1024))
 
 

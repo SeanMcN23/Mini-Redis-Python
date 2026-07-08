@@ -94,6 +94,8 @@ class Server:
             "FLUSHDB": self.cmd_flushdb,
             "SAVE": self.cmd_save,
             "LOAD": self.cmd_load,
+            "MGET": self.cmd_mget,
+            "MSET": self.cmd_mset
         }
         
 
@@ -265,6 +267,29 @@ class Server:
         if len(data) != 1:
             raise CommandError("PING requires 0 argument")
         return "PONG"
+    def cmd_mget(self,data):
+        if len(data) < 2:
+            raise CommandError("MGET requires a list of values")
+        
+        lst=[]
+        for temp in data[1:]:
+            self.check_expire(temp)
+            lst.append(self._kv.get(temp))
+        return lst
+    def cmd_mset(self,data):
+        if len(data) < 2:
+            raise CommandError("MSET requires a list of values")
+        key = data[1::2]
+        val= data[2::2]
+        for keye, value in zip(key,val):
+            self._kv[keye]=value
+        return "OK"
+        
+
+        
+
+
+
 
 
     def get_response(self,data):

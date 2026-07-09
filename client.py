@@ -28,6 +28,10 @@ print(client.recv(1024))
 
 client.sendall(encode_command("DBSIZE"))
 print(client.recv(1024))
+client.sendall(encode_command("TYPE", "name"))
+print(client.recv(1024))
+
+
 # client.sendall(encode_command("RENAME", "name", "my_first_name"))
 # print(client.recv(1024))
 

@@ -100,6 +100,7 @@ class Server:
             "MSET": self.cmd_mset,
             "RENAME":self.cmd_rename,
             "DBSIZE": self.cmd_dbsize,
+            "TYPE": self.cmd_type,
 
 
         }
@@ -184,6 +185,16 @@ class Server:
         for key in list(self._kv.keys()):
             self.check_expire(key)
         return len(self._kv)
+    
+    def cmd_type(self,data):
+        if len(data) != 2:
+            raise CommandError("TYPE requires 1 argument")
+        key=data[1]
+        self.check_expire(key)
+
+        if key not in self._kv:
+            return "None"
+        return "string"
         
 
     def cmd_save(self,data):

@@ -64,6 +64,8 @@ class ProtocolHandler:
             socket_file.write(f"*{len(data)}\r\n".encode())
 
             for item in data:
+                if item is None:
+                    socket_file.write(b"$-1\r\n")
                 item=str(item).encode("utf-8")
                 socket_file.write(b"$" + str(len(item)).encode() + b"\r\n")
                 socket_file.write(item+ b"\r\n")
@@ -97,6 +99,8 @@ class Server:
             "MGET": self.cmd_mget,
             "MSET": self.cmd_mset,
             "RENAME":self.cmd_rename,
+            "DBSIZE": self.cmd_dbsize,
+
 
         }
         
@@ -150,7 +154,7 @@ class Server:
         
         if len(data) == 5 and data[3].upper() == "EX":
             self.expire[data[1]]=time.time()+float(data[4])
-        elif data[3] != "EX":
+        elif len(data) ==5 and data[3] != "EX":
             raise CommandError("SET requires 2 arguments or EX followed by time")
             
 
@@ -158,9 +162,10 @@ class Server:
     
 
     def cmd_get(self,data):
-        self.check_expire(data[1])
+        
         if len(data) != 2:
             raise CommandError("GET requires 1 argument")
+        self.check_expire(data[1])
             
 
         return self._kv.get(data[1])
@@ -172,6 +177,14 @@ class Server:
         for key in list(self._kv.keys()):
             self.check_expire(key)
         return list(self._kv.keys())
+    
+    def cmd_dbsize(self,data):
+        if len(data) != 1:
+            raise CommandError("DBSIZE requires 0 arguments")
+        for key in list(self._kv.keys()):
+            self.check_expire(key)
+        return len(self._kv)
+        
 
     def cmd_save(self,data):
         with open("dump.json",'w') as f:
@@ -252,20 +265,22 @@ class Server:
             
         return int(self.expire[data[1]]-time.time())
     def cmd_del(self,data):
-        self.check_expire(data[1])
-        self.expire.pop(data[1], None)
+        
         if len(data) != 2:
             raise CommandError("DEL requires 1 argument")
+        self.check_expire(data[1])
+        self.expire.pop(data[1], None)
         if data[1] in self._kv:
             del self._kv[data[1]]
             return 1
         else:
             return 0
     def cmd_exists(self,data):
-        self.check_expire(data[1])
+       
             
         if len(data) != 2:
             raise CommandError("EXISTS requires 1 argument")
+        self.check_expire(data[1])
             
         val=data[1] in self._kv
         if val == True:
@@ -276,6 +291,9 @@ class Server:
         if len(data) != 1:
             raise CommandError("PING requires 0 argument")
         return "PONG"
+    
+    
+    
     def cmd_mget(self,data):
         if len(data) < 2:
             raise CommandError("MGET requires a list of values")
@@ -285,8 +303,12 @@ class Server:
             self.check_expire(temp)
             lst.append(self._kv.get(temp))
         return lst
+    
+   
+   
+   
     def cmd_mset(self,data):
-        if len(data) < 2:
+        if (len(data)-1) %2 != 0:
             raise CommandError("MSET requires a list of values")
         key = data[1::2]
         val= data[2::2]
@@ -298,10 +320,16 @@ class Server:
         if len(data) != 3:
             raise CommandError("Expected 3 arguments for RENAME")
         
+        
         old=data[1]
         new=data[2]
+        
+        if old not in self._kv:
+            raise CommandError("No such key exists")
+        
         if old == new:
             return "OK"
+        
 
         val=self._kv.get(old)
         if old in self._kv:

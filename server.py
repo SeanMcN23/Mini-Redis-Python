@@ -2,6 +2,8 @@ from io import BytesIO
 from gevent.pool import Pool
 from gevent.server import StreamServer
 from collections import namedtuple
+from gevent.lock import Semaphore
+
 import time
 import json
 
@@ -82,6 +84,7 @@ class Server:
         self.expire={}
         self.host=host
         self.port=port
+        self._lock = Semaphore()
         self.commands={
             "SET": self.cmd_set,
             "GET": self.cmd_get,
@@ -379,8 +382,8 @@ class Server:
 
         if handler is None:
             raise CommandError("Not a command")
-        
-        return handler(data)
+        with self._lock:
+            return handler(data)
    
         
        

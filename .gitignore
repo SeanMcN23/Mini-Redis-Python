@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+dump.json
+.pytest_cache/
+*.pyc
+.vscode/
